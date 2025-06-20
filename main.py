@@ -1,7 +1,7 @@
 import products
 from searcher import Searcher
 from topicmanager import TopicManager, TopicImportDialog, TopicExportDialog
-from productmanager import ProductCreator
+from productmanager import ProductManager
 import sys
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QMessageBox, QLabel, QPushButton,
                              QLineEdit, QDialog, QHBoxLayout, QVBoxLayout, QInputDialog,
@@ -19,7 +19,7 @@ class ProductHub(QMainWindow):
 
         self.searcher = Searcher()
         self.topicman = TopicManager()
-        self.productman = ProductCreator()
+        self.productman = ProductManager()
         # Creates the instances of the tools early for later use
 
         self.searcher_button = QPushButton("Open Searcher", self)
