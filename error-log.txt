@@ -1,9 +1,0 @@
-2025-06-19 21:41:05 [WARNING] [!] Some items of the product '?' were missing
-2025-06-19 21:41:05 [WARNING] 1 broken product/s found while importing products.json
-2025-06-19 21:42:06 [WARNING] [!] Some items of the product '223' were missing
-2025-06-19 21:42:06 [WARNING] 1 broken product/s found while importing products.json
-2025-06-19 21:42:21 [WARNING] [!] Invalid price for product '223'
-2025-06-19 21:42:21 [WARNING] 1 broken product/s found while importing products.json
-2025-06-19 21:44:59 [WARNING] [!] Make sure the product was correctly exported '223'
-2025-06-19 21:44:59 [WARNING] 1 broken product/s found while importing products.json
-2025-06-19 23:15:05 [ERROR] Couldn't find the file: topics.json
