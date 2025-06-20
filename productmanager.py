@@ -1,13 +1,14 @@
 import products
 import sys
-from PyQt5.QtWidgets import (QApplication, QWidget, QLabel, QPushButton, QDialog,
-                             QLineEdit, QHBoxLayout, QVBoxLayout, QMessageBox, QInputDialog,)
+from PyQt5.QtWidgets import (QApplication, QWidget, QLabel, QPushButton, QDialog, QCheckBox,
+                             QLineEdit, QHBoxLayout, QVBoxLayout, QMessageBox, QInputDialog,
+                             QDialogButtonBox)
 from PyQt5.QtCore import Qt
 
-class ProductCreator(QWidget):
+class ProductManager(QWidget):
     def __init__(self):
         super().__init__()
-        self.title = QLabel("Product Creator", self)
+        self.title = QLabel("Product Manager", self)
         self.insert_title = QLabel("Insert new product data:", self)
 
         self.name_label = QLabel("· Name: ", self)
@@ -24,10 +25,12 @@ class ProductCreator(QWidget):
 
         self.message_label = QLabel(self)
         self.create_product_button = QPushButton("Create Product", self)
+        self.delete_products_button = QPushButton("Delete Products", self)
         self.import_button = QPushButton("Import Products", self)
         self.export_button = QPushButton("Export Current Products", self)
 
         self.create_product_button.clicked.connect(self.create_product)
+        self.delete_products_button.clicked.connect(self.delete_products)
         self.import_button.clicked.connect(self.import_prd)
         self.export_button.clicked.connect(self.export_prd)
 
@@ -46,6 +49,7 @@ class ProductCreator(QWidget):
         vbox.addWidget(self.price_textbox)
         vbox.addWidget(self.message_label)
         vbox.addWidget(self.create_product_button)
+        vbox.addWidget(self.delete_products_button)
 
         # So the import and export buttons look different
         hbox = QHBoxLayout()
@@ -126,13 +130,22 @@ class ProductCreator(QWidget):
                     self.price_textbox.setText("")
             else:
                 raise ValueError
-
             self.message_label.setText("Product Successfully Created!")
             QMessageBox.information(self, "New Product Created", object_message)
         except ValueError:
             warning = QMessageBox()
-            warning.critical(self, "Error", "Please enter the data in the right format.\n\n"
+            warning.critical(self, "Error", "Product data is not in the right format or the product already exists.\n\n"
                                             "* Price must not contain any symbols,\nand must be greater than 0")
+
+    def delete_products(self):
+        if not products.Product.get_instances():
+            QMessageBox.warning(self, "Product Deleter", "There are no products available")
+            return
+        product_deleter = ProductDeleter()
+        if product_deleter.exec_():
+            selected = product_deleter.get_selected_products()
+            for prd in selected:
+                products.delete_products(prd.name)
 
 
     def show_current_products(self):
@@ -146,8 +159,67 @@ class ProductCreator(QWidget):
             QMessageBox.warning(self, "Current Products", "No products found")
 
 
+class ProductDeleter(QDialog):
+    def __init__(self):
+        super().__init__()
+
+        self.setMinimumWidth(250)
+
+        self.setWindowTitle("Product deleter")
+        self.title = QLabel("Delete Products", self)
+        self.select_all_button = QPushButton("Select All", self)
+        self.unselect_all_button = QPushButton("Unselect All", self)
+        self.checkboxes = list()
+
+        self.title.setAlignment(Qt.AlignCenter)
+
+        button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        button_box.accepted.connect(self.accept)
+        button_box.rejected.connect(self.reject)
+
+        self.select_all_button.clicked.connect(self.select_all)
+        self.unselect_all_button.clicked.connect(self.unselect_all)
+
+        vbox = QVBoxLayout()
+        vbox.addWidget(self.title)
+        vbox.addWidget(self.select_all_button)
+        vbox.addWidget(self.unselect_all_button)
+
+        for product in products.Product.get_instances():
+            checkbox = QCheckBox(f"{product.name}")
+            checkbox.prd = product
+            self.checkboxes.append(checkbox)
+            vbox.addWidget(checkbox)
+
+        vbox.addWidget(button_box)
+
+        self.setLayout(vbox)
+
+        self.setStyleSheet("""
+            * {
+                font-size: 14px;
+                font-family: Calibri;
+            }
+        """)
+
+    def get_selected_products(self):
+        return [
+            cb.prd
+            for cb in self.checkboxes if cb.isChecked()
+        ]
+
+    def select_all(self):
+        for cb in self.checkboxes:
+            cb.setChecked(True)
+
+    def unselect_all(self):
+        for cb in self.checkboxes:
+            cb.setChecked(False)
+
+
+
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    creator = ProductCreator()
+    creator = ProductManager()
     creator.show()
     sys.exit(app.exec_())

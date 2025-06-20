@@ -20,6 +20,7 @@ class ProductHub(QMainWindow):
         self.searcher = Searcher()
         self.topicman = TopicManager()
         self.productman = ProductCreator()
+        # Creates the instances of the tools early for later use
 
         self.searcher_button = QPushButton("Open Searcher", self)
         self.topicman_button = QPushButton("Open Topic Manager", self)
@@ -33,6 +34,7 @@ class ProductHub(QMainWindow):
         self.searcher_button.clicked.connect(self.searcher.show)
         self.topicman_button.clicked.connect(self.topicman.show)
         self.productman_button.clicked.connect(self.productman.show)
+
         self.show_current_topics_button.clicked.connect(self.show_current_topics)
         self.show_current_products_button.clicked.connect(self.show_current_products)
 
@@ -60,6 +62,7 @@ class ProductHub(QMainWindow):
         hbox.addWidget(self.show_current_topics_button)
         self.show_current_topics_button.setMaximumHeight(150)
         vbox.addLayout(hbox)
+        # This sets up the whole layouts
 
         self.title.setAlignment(Qt.AlignCenter)
         self.title.setObjectName("title")
@@ -122,6 +125,7 @@ class ProductHub(QMainWindow):
                 background-color: hsl(110, 0%, 51%);
             }
         """)
+        # All buttons get a little bit darker and the font size gets a little bit bigger on hover
 
         central_widget = QWidget()
         central_widget.setLayout(vbox)

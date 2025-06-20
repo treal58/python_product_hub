@@ -1,3 +1,7 @@
+# products.py
+# Core module for defining and handling product-related logic.
+# Includes tax calculation, product management, topic creation, and JSON I/O functions.
+
 import json
 import logging
 
@@ -60,22 +64,29 @@ logging.basicConfig(
 )
 
 def create_topic(name: str, tax: int) -> None:
+    # Adds a new custom topics to the topics dictionary
     if not name.isalpha():
         raise ValueError("Topic name must be only letters (a-z)")
     if name in topics:
         raise ValueError(f"Topic '{name}' already exists")
     topics[name] = tax
 
-def apply_taxes(topic_name: str, base: float):
+def apply_taxes(topic_name: str, base: float) -> float:
     tax = topics.get(topic_name)
     return base * (1 + tax / 100)
 
 class Product:
-    instances = []
+    _instances = []
 
     def __init__(self, name, topic, price):
+        # Capitalized name is used to mantain visual consistency
         self.name = name.capitalize()
+        # But topic is always lowercase for easier reference
         topic = topic.lower()
+
+        if any(p.name == self.name for p in Product._instances):
+            raise ValueError(f"Product '{self.name}' already exists.")
+
         if topic not in topics:
             print(f"Topic '{topic}' not found. Using default.")
             self.topic = "default"
@@ -87,17 +98,31 @@ class Product:
         else:
             self.notax_price = price
 
+        # Calculates final taxed price, rounded to 2 decimals
         self.price = round(apply_taxes(self.topic, self.notax_price), 2)
-        self.instances.append(self)
+        # Adds a reference for the object for further use
+        self._instances.append(self)
 
-
+    # The list 'instances' will contain references to all the products
     @classmethod
     def get_instances(cls):
-        return cls.instances
+        return cls._instances
+
+def delete_products(name: str) -> bool:
+    product_list = Product.get_instances()
+    # Deletes the reference of the product in the 'instances' list
+    for product in product_list:
+        if name.capitalize() == product.name:
+            product_list.remove(product)
+            return True
+    # If the product isn't found False will be returned
+    return False
+
 
 def export_prd_to_json(filename="products.json"):
     data = []
 
+    # Takes all the current products and exports them to a .json
     for product in Product.get_instances():
         data.append({
             "name": product.name,
@@ -112,29 +137,34 @@ def import_prd_from_json(filename="products.json"):
         with open(filename, "r") as f:
             data = json.load(f)
             broken = 0
-            names = []
+            names = {product.name for product in Product.get_instances()}
+            # The set 'names' is used to check if the product being imported already exists.
             for idx, item in enumerate(data):
+                # First it checks if there's something missing in the product
                 if not all(k in item for k in ("name", "topic", "price")):
-                    logging.warning(f"[!] Invalid price for product '{item.get('name', '?')}'")
-                    print(f"[!] Invalid price for product '{item.get('name', '?')}'")
+                    logging.warning(f"[!] Some items of the product '{item.get('name', '?')}' were missing")
+                    print(f"[!] Some items of the product '{item.get('name', '?')}' were missing")
                     broken += 1
                 else:
                     try:
-                        for product in Product.get_instances():
-                            names.append(product.name)
+                        # Then it checks if it already exists with the set 'names'
                         if item["name"] in names:
                             print(f"Product '{item['name']}' skipped; It already exists")
                         else:
                             price = float(item["price"])
                             Product(item["name"], item["topic"], price)
+
+                    # If the product doesn't have the correct type on its parameters it won't be imported
                     except (ValueError, TypeError):
-                        print(f"[!] Invalid price for product '{item.get('name', '?')}'")
-                        logging.warning(f"[!] Invalid price for product '{item.get('name', '?')}'")
+                        print(f"[!] Make sure the product was correctly exported '{item.get('name', '?')}'")
+                        logging.warning(f"[!] Make sure the product was correctly exported '{item.get('name', '?')}'")
                         broken += 1
             if broken > 0:
                 print(f"{broken} broken product/s found while importing {filename}")
                 logging.warning(f"{broken} broken product/s found while importing {filename}")
         return True
+
+    # File problem exceptions
     except FileNotFoundError:
         logging.error("Couldn't find the file: %s", filename)
         return False
@@ -143,10 +173,13 @@ def import_prd_from_json(filename="products.json"):
         return False
 
 def export_topics_json(filename="topics.json", topics_to_export=None):
+    # First, a list for the topics to export is created
     data = []
 
-    topics_items = list(topics.items())[10:]  # omit default topics
+    topics_items = list(topics.items())[10:]  # 10: Will omit the first 10 topics, which are the default ones.
 
+    # 'topics_to_export' has to be used only if you want to export SOME items
+    # if you don't fill topics_to_export with anything, then all topics will be exported
     for name, percentage in topics_items:
         if not topics_to_export or name in topics_to_export:
             data.append({name: percentage})
@@ -158,8 +191,11 @@ def import_topics_json(filename="topics.json", preview=False):
     try:
         with open(filename, "r") as f:
             data = json.load(f)
+
+            # If preview = True ONLY the data will be returned, but no topics will be created
+            # This is useful if you want the user to select which topics it has to import
             if preview:
-                return data  # Returns data for review if asked for
+                return data
             for topic in data:
                 for name, percentage in topic.items():
                     create_topic(name, percentage)
@@ -173,6 +209,8 @@ def import_topics_json(filename="topics.json", preview=False):
 
 
 def chart(*args):
+
+    # This is a simple chart for showing all the products in Args
     lines = list()
     lines.append(f"{'Product':<15}{'Price':>10}")
     lines.append("-" * 25)

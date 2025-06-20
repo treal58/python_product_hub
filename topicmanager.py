@@ -75,7 +75,7 @@ class TopicManager(QWidget):
         """)
 
     def open_import_dialog(self):
-
+        # Checks what file the user wants to import from
         default = QMessageBox.question(self, "Import", "Would you like to use default file (topics.json)?")
         if default == QMessageBox.Yes:
             data = products.import_topics_json(preview=True)  ## Will import from topics.json
@@ -91,6 +91,7 @@ class TopicManager(QWidget):
         if not data:
             QMessageBox.critical(self, "Error", "No topics found in .json file")
             return
+        # If there's no data in the .json the process will stop, but it will else continue
 
         dialog = TopicImportDialog(data, self)
         if dialog.exec_():
@@ -104,9 +105,10 @@ class TopicManager(QWidget):
             QMessageBox.information(self, "Success", f"{imported} topic(s) imported.")
 
     def open_export_dialog(self):
+        # Checks what file the user wants to export to
         default = QMessageBox.question(self, "Export", "Would you like to use default file (topics.json)?")
         if default == QMessageBox.Yes:
-            filedir = "topics.json"# Will use the default .json to export
+            filedir = "topics.json" # Will use the default .json to export
         elif default == QMessageBox.No:
             file, ok = QInputDialog.getText(self, "Export",
                                             "Enter the directory of the output file (.json needed):")
