@@ -1,11 +1,9 @@
 import products
 from searcher import Searcher
-from topicmanager import TopicManager, TopicImportDialog, TopicExportDialog
+from topicmanager import TopicManager
 from productmanager import ProductManager
 import sys
-from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QMessageBox, QLabel, QPushButton,
-                             QLineEdit, QDialog, QHBoxLayout, QVBoxLayout, QInputDialog,
-                             QCheckBox, QDialogButtonBox)
+from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QMessageBox, QLabel, QPushButton, QHBoxLayout, QVBoxLayout
 from PyQt5.QtCore import Qt
 
 
@@ -55,6 +53,7 @@ class ProductHub(QMainWindow):
 
         vbox.addWidget(self.productman_button)
         self.productman_button.setMaximumHeight(150)
+        # VBoxLayout for the main buttons
 
         hbox = QHBoxLayout()
         hbox.addWidget(self.show_current_products_button)
@@ -62,7 +61,7 @@ class ProductHub(QMainWindow):
         hbox.addWidget(self.show_current_topics_button)
         self.show_current_topics_button.setMaximumHeight(150)
         vbox.addLayout(hbox)
-        # This sets up the whole layouts
+        # HBoxLayout for the Show Current Products / Topics buttons
 
         self.title.setAlignment(Qt.AlignCenter)
         self.title.setObjectName("title")

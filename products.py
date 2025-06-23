@@ -79,8 +79,8 @@ class Product:
     _instances = []
 
     def __init__(self, name, topic, price):
-        # Capitalized name is used to mantain visual consistency
-        self.name = name.capitalize()
+        # The titled name is used to mantain visual consistency
+        self.name = name.title()
         # But topic is always lowercase for easier reference
         topic = topic.lower()
 
@@ -118,6 +118,48 @@ def delete_products(name: str) -> bool:
     # If the product isn't found False will be returned
     return False
 
+def import_prd_from_json(filename="products.json"):
+    try:
+        with open(filename, "r") as f:
+            data = json.load(f)
+    except FileNotFoundError:
+        logging.error("Couldn't find the file: %s", filename)
+        return False
+    except json.JSONDecodeError:
+        logging.error("Couldn't read the file (Make sure it's an exported JSON): %s", filename)
+        return False
+
+    broken = 0
+    names = {product.name for product in Product.get_instances()}
+    # The set 'names' is used to check if the product being imported already exists.
+    for item in data:
+        item_name = item.get('name', '?')
+        
+        # First it checks if there's something missing in the product
+        if not all(k in item for k in ("name", "topic", "price")):
+            logging.warning(f"[!] Some items of the product '{item_name}' were missing")
+            print(f"[!] Some items of the product '{item_name}' were missing")
+            broken += 1
+            continue
+        
+        # Then it checks if it already exists with the set 'names'
+        if item["name"] in names:
+            print(f"Product '{item['name']}' skipped; It already exists")
+            continue
+        
+        try:
+            price = float(item["price"])
+            Product(item["name"], item["topic"], price)
+        # If the product doesn't have the correct type on its parameters it won't be imported
+        except (ValueError, TypeError):
+            print(f"[!] Make sure the product was correctly exported '{item_name}'")
+            logging.warning(f"[!] Make sure the product was correctly exported '{item_name}'")
+            broken += 1
+    if broken > 0:
+        print(f"{broken} broken product/s found while importing {filename}")
+        logging.warning(f"{broken} broken product/s found while importing {filename}")
+        
+    return True
 
 def export_prd_to_json(filename="products.json"):
     data = []
@@ -129,61 +171,6 @@ def export_prd_to_json(filename="products.json"):
             "topic": product.topic,
             "price": product.notax_price
         })
-    with open(filename, "w") as f:
-        json.dump(data, f, indent=4)
-
-def import_prd_from_json(filename="products.json"):
-    try:
-        with open(filename, "r") as f:
-            data = json.load(f)
-            broken = 0
-            names = {product.name for product in Product.get_instances()}
-            # The set 'names' is used to check if the product being imported already exists.
-            for idx, item in enumerate(data):
-                # First it checks if there's something missing in the product
-                if not all(k in item for k in ("name", "topic", "price")):
-                    logging.warning(f"[!] Some items of the product '{item.get('name', '?')}' were missing")
-                    print(f"[!] Some items of the product '{item.get('name', '?')}' were missing")
-                    broken += 1
-                else:
-                    try:
-                        # Then it checks if it already exists with the set 'names'
-                        if item["name"] in names:
-                            print(f"Product '{item['name']}' skipped; It already exists")
-                        else:
-                            price = float(item["price"])
-                            Product(item["name"], item["topic"], price)
-
-                    # If the product doesn't have the correct type on its parameters it won't be imported
-                    except (ValueError, TypeError):
-                        print(f"[!] Make sure the product was correctly exported '{item.get('name', '?')}'")
-                        logging.warning(f"[!] Make sure the product was correctly exported '{item.get('name', '?')}'")
-                        broken += 1
-            if broken > 0:
-                print(f"{broken} broken product/s found while importing {filename}")
-                logging.warning(f"{broken} broken product/s found while importing {filename}")
-        return True
-
-    # File problem exceptions
-    except FileNotFoundError:
-        logging.error("Couldn't find the file: %s", filename)
-        return False
-    except json.JSONDecodeError:
-        logging.error("Couldn't read the file (Make sure it's an exported JSON): %s", filename)
-        return False
-
-def export_topics_json(filename="topics.json", topics_to_export=None):
-    # First, a list for the topics to export is created
-    data = []
-
-    topics_items = list(topics.items())[10:]  # 10: Will omit the first 10 topics, which are the default ones.
-
-    # 'topics_to_export' has to be used only if you want to export SOME items
-    # if you don't fill topics_to_export with anything, then all topics will be exported
-    for name, percentage in topics_items:
-        if not topics_to_export or name in topics_to_export:
-            data.append({name: percentage})
-
     with open(filename, "w") as f:
         json.dump(data, f, indent=4)
 
@@ -206,6 +193,21 @@ def import_topics_json(filename="topics.json", preview=False):
     except json.JSONDecodeError:
         logging.error("Couldn't read the file (Make sure it's an exported JSON): %s", filename)
         return [] if preview else False
+
+def export_topics_json(filename="topics.json", topics_to_export=None):
+    # First, a list for the topics to export is created
+    data = []
+
+    topics_items = list(topics.items())[10:]  # 10: Will omit the first 10 topics, which are the default ones.
+
+    # 'topics_to_export' has to be used only if you want to export SOME items
+    # if you don't fill topics_to_export with anything, then all topics will be exported
+    for name, percentage in topics_items:
+        if not topics_to_export or name in topics_to_export:
+            data.append({name: percentage})
+
+    with open(filename, "w") as f:
+        json.dump(data, f, indent=4)
 
 
 def chart(*args):

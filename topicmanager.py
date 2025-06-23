@@ -28,8 +28,8 @@ class TopicManager(QWidget):
         self.message_label = QLabel(self)
 
         self.create_topic_button.clicked.connect(self.create_topic)
-        self.import_topics_button.clicked.connect(self.open_import_dialog)
-        self.export_topics_button.clicked.connect(self.open_export_dialog)
+        self.import_topics_button.clicked.connect(self.import_topics)
+        self.export_topics_button.clicked.connect(self.export_topics)
 
         self.initUI()
 
@@ -45,11 +45,13 @@ class TopicManager(QWidget):
         vbox.addWidget(self.tax_label)
         vbox.addWidget(self.tax_textbox)
         vbox.addWidget(self.create_topic_button)
+        # VBoxLayout for all the main buttons and labels
 
         hbox = QHBoxLayout()
         hbox.addWidget(self.import_topics_button)
         hbox.addWidget(self.export_topics_button)
         vbox.addLayout(hbox)
+        # HBoxLayout for the Import / Export buttons
 
         vbox.addWidget(self.message_label)
 
@@ -73,62 +75,6 @@ class TopicManager(QWidget):
                 font-size: 18px;
             }
         """)
-
-    def open_import_dialog(self):
-        # Checks what file the user wants to import from
-        default = QMessageBox.question(self, "Import", "Would you like to use default file (topics.json)?")
-        if default == QMessageBox.Yes:
-            data = products.import_topics_json(preview=True)  ## Will import from topics.json
-        elif default == QMessageBox.No:
-            file, ok = QInputDialog.getText(self, "Import",
-                                            "Enter the directory of the file being imported (.json needed):")
-            if ok and file:
-                data = products.import_topics_json(file, preview=True)
-            else:
-                QMessageBox.critical(self, "Error", "The directory is invalid")
-                return
-
-        if not data:
-            QMessageBox.critical(self, "Error", "No topics found in .json file")
-            return
-        # If there's no data in the .json the process will stop, but it will else continue
-
-        dialog = TopicImportDialog(data, self)
-        if dialog.exec_():
-            selected = dialog.get_selected_topics()
-            imported = 0
-            for topic in selected:
-                for name, tax in topic.items():
-                    if name not in products.topics:
-                        products.create_topic(name, tax)
-                        imported += 1
-            QMessageBox.information(self, "Success", f"{imported} topic(s) imported.")
-
-    def open_export_dialog(self):
-        # Checks what file the user wants to export to
-        default = QMessageBox.question(self, "Export", "Would you like to use default file (topics.json)?")
-        if default == QMessageBox.Yes:
-            filedir = "topics.json" # Will use the default .json to export
-        elif default == QMessageBox.No:
-            file, ok = QInputDialog.getText(self, "Export",
-                                            "Enter the directory of the output file (.json needed):")
-            if ok and file:
-                filedir = file
-            else:
-                QMessageBox.critical(self, "Error", "The directory is invalid")
-                return
-
-        dialog = TopicExportDialog(self)
-        if dialog.exec_():
-            selected = dialog.get_selected_topics()
-            selected_names = [list(topic.keys())[0] for topic in selected]
-
-            if not selected_names:
-                QMessageBox.warning(self, "Warning", "No topics selected for export.")
-                return
-
-            products.export_topics_json(filedir, topics_to_export=selected_names)
-            QMessageBox.information(self, "Success", f"{len(selected_names)} topic(s) exported.")
 
     def create_topic(self):
         name = self.name_textbox.text().lower().strip()
@@ -155,6 +101,65 @@ class TopicManager(QWidget):
                     self.name_textbox.setText("")
                     self.tax_textbox.setText("")
                     self.message_label.setText(f"Topic '{name}' with {tax}% of taxes was created")
+
+    def import_topics(self):
+        # Checks what file the user wants to import from
+        default = QMessageBox.question(self, "Import", "Would you like to use default file (topics.json)?")
+        if default == QMessageBox.Yes:
+            data = products.import_topics_json(preview=True)  # Will import from topics.json
+        elif default == QMessageBox.No:
+            file, ok = QInputDialog.getText(self, "Import",
+                                            "Enter the directory of the file being imported (.json needed):")
+            if ok and file:
+                data = products.import_topics_json(file, preview=True)
+            else:
+                QMessageBox.critical(self, "Error", "The directory is invalid")
+                return
+
+        if not data:
+            QMessageBox.critical(self, "Error", "No topics found in .json file")
+            return
+        # If there's no data in the .json the process will stop, but it will else continue
+
+        dialog = TopicImportDialog(data, self)
+        if dialog.exec_():
+            selected = dialog.get_selected_topics()
+            imported = 0
+            for topic in selected:
+                for name, tax in topic.items():
+                    if name not in products.topics:
+                        products.create_topic(name, tax)
+                        imported += 1
+            QMessageBox.information(self, "Success", f"{imported} topic(s) imported.")
+
+    def export_topics(self):
+        # Checks what file the user wants to export to
+        default = QMessageBox.question(self, "Export", "Would you like to use default file (topics.json)?")
+        if default == QMessageBox.Yes:
+            filedir = "topics.json" # Will use the default .json to export
+        elif default == QMessageBox.No:
+            file, ok = QInputDialog.getText(self, "Export",
+                                            "Enter the directory of the output file (.json needed):")
+            if ok and file:
+                filedir = file
+            else:
+                QMessageBox.critical(self, "Error", "The directory is invalid")
+                return
+
+        dialog = TopicExportDialog(self)
+        # Opens the Export Dialog for the user to select the topics
+        
+        # From here it starts to export the topics selected in the dialog
+        if dialog.exec_():
+            selected = dialog.get_selected_topics()
+            selected_names = [list(topic.keys())[0] for topic in selected]
+
+            if not selected_names:
+                QMessageBox.warning(self, "Warning", "No topics selected for export.")
+                return
+
+            products.export_topics_json(filedir, topics_to_export=selected_names)
+            QMessageBox.information(self, "Success", f"{len(selected_names)} topic(s) exported.")
 
 class TopicImportDialog(QDialog):
     def __init__(self, topics_list, parent=None):

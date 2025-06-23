@@ -71,42 +71,6 @@ class ProductManager(QWidget):
 
         self.setWindowTitle("Product Creator")
 
-
-
-
-    def import_prd(self):
-        success = False
-
-        default = QMessageBox.question(self, "Import", "Would you like to use default file (products.json)?")
-        if default == QMessageBox.Yes:
-            success = products.import_prd_from_json() ## Will import from products.json
-        else:
-            file, ok = QInputDialog.getText(self, "Import", "Enter the directory of the file being imported (.json needed):")
-            if ok and file:
-                success = products.import_prd_from_json(file)
-
-        if success:
-            self.message_label.setText("Successfully imported!")
-            self.show_current_products()
-        else:
-            QMessageBox.critical(self, "Error Importing", "Could not import the file.\nMake sure it exists and is valid.")
-
-    def export_prd(self):
-        default = QMessageBox.question(self, "Export", "Would you like to export to the default file (products.json)?")
-        if default == QMessageBox.Yes:
-            if products.Product.get_instances():
-                products.export_prd_to_json() ## Will export to products.json
-            else:
-                QMessageBox.critical(self, "Error Exporting", "There are no products to export")
-        else:
-            file, ok = QInputDialog.getText(self, "Import",
-                                            "Enter the directory of where you want to export the file(.json needed):")
-            if (ok and file) and products.Product.get_instances():
-                products.export_prd_to_json(file)
-                self.message_label.setText("Successfully exported!")
-            else:
-                QMessageBox.critical(self, "Error Exporting", "There are no products to export")
-
     def create_product(self):
         try:
             name = self.name_textbox.text()
@@ -148,17 +112,42 @@ class ProductManager(QWidget):
                 products.delete_products(prd.name)
 
 
-    def show_current_products(self):
-        if products.Product.get_instances():
-            info = ("Current products:\n"
-                    "Format: name / topic / price\n\n")
-            for product in products.Product.get_instances():
-                info += f"- {product.name} / {product.topic} / ${product.price}\n"
-            QMessageBox.information(self, "Current Products", info)
+
+    def import_prd(self):
+        success = False
+
+        default = QMessageBox.question(self, "Import", "Would you like to use default file (products.json)?")
+        if default == QMessageBox.Yes:
+            success = products.import_prd_from_json() ## Will import from products.json
         else:
-            QMessageBox.warning(self, "Current Products", "No products found")
+            file, ok = QInputDialog.getText(self, "Import", "Enter the directory of the file being imported (.json needed):")
+            if ok and file:
+                success = products.import_prd_from_json(file)
+
+        if success:
+            self.message_label.setText("Successfully imported!")
+            self.show_current_products()
+        else:
+            QMessageBox.critical(self, "Error Importing", "Could not import the file.\nMake sure it exists and is valid.")
+
+    def export_prd(self):
+        default = QMessageBox.question(self, "Export", "Would you like to export to the default file (products.json)?")
+        if default == QMessageBox.Yes:
+            if products.Product.get_instances():
+                products.export_prd_to_json() ## Will export to products.json
+            else:
+                QMessageBox.critical(self, "Error Exporting", "There are no products to export")
+        else:
+            file, ok = QInputDialog.getText(self, "Import",
+                                            "Enter the directory of where you want to export the file(.json needed):")
+            if (ok and file) and products.Product.get_instances():
+                products.export_prd_to_json(file)
+                self.message_label.setText("Successfully exported!")
+            else:
+                QMessageBox.critical(self, "Error Exporting", "There are no products to export")
 
 
+# Window just for deleting products, with checkboxes
 class ProductDeleter(QDialog):
     def __init__(self):
         super().__init__()
