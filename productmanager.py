@@ -126,7 +126,6 @@ class ProductManager(QWidget):
 
         if success:
             self.message_label.setText("Successfully imported!")
-            self.show_current_products()
         else:
             QMessageBox.critical(self, "Error Importing", "Could not import the file.\nMake sure it exists and is valid.")
 
